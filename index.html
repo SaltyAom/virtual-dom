@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script>
+            let h = (nodeName, attributes, ...childNodes) => ({
+                    nodeName: nodeName.toLowerCase(),
+                    attributes: attributes === null ? false : attributes,
+                    childNodes
+                }),
+                keys = value => Object.keys(value),
+                compareAttributes = (attributes, oldAttributes) => {
+                    let _attributes = {},
+                        intersect = keys(attributes).filter(property =>
+                            keys(oldAttributes).includes(property)
+                        )
+
+                    keys(oldAttributes).filter(property => {
+                        if (!intersect.includes(property))
+                            _attributes[property] = ""
+                    })
+
+                    intersect.forEach(property => {
+                        if (typeof attributes[property] === "object") {
+                            let comparedSubsetAttributes = compareAttributes(
+                                attributes[property],
+                                oldAttributes[property]
+                            )
+
+                            return keys(comparedSubsetAttributes).length
+                                ? (_attributes[
+                                      property
+                                  ] = comparedSubsetAttributes)
+                                : null
+                        }
+
+                        if (attributes[property] !== oldAttributes[property])
+                            return (_attributes[property] =
+                                attributes[property])
+                    })
+
+                    return _attributes
+                },
+                diff = (current, old) => {
+                    if (current.nodeName !== old.nodeName) return current
+
+                    let attributes = {},
+                        childNodes = Array.apply(
+                            false,
+                            new Array(current.childNodes.length)
+                        ).map(() => false)
+
+                    if (typeof current.attributes === typeof old.attributes) {
+                        attributes = compareAttributes(
+                            current.attributes,
+                            old.attributes
+                        )
+                    } else attributes = current.attributes
+
+                    current.childNodes.forEach((child, index) => {
+                        if (
+                            typeof child === "string" &&
+                            child !== old.childNodes[index].textContent
+                        )
+                            return (childNodes[index] = child)
+
+                        if (
+                            typeof child !== "object" ||
+                            typeof old.childNodes !== "object"
+                        )
+                            return (childNodes[index] = child)
+
+                        let diffedNode = diff(child, old.childNodes[index])
+
+                        if (
+                            !diffedNode.nodeName &&
+                            !diffedNode.attributes &&
+                            !diffedNode.childNodes
+                        )
+                            return
+                        else return (childNodes[index] = diffedNode)
+                    })
+
+                    if (!childNodes.filter(child => child !== false).length)
+                        childNodes = false
+
+                    return {
+                        nodeName: false,
+                        attributes: keys(attributes).length
+                            ? attributes
+                            : false,
+                        childNodes: keys(childNodes).length ? childNodes : false
+                    }
+                },
+                applyAttributes = (attributes, ref, shallow = true) => {
+                    keys(attributes).forEach(property => {
+                        if (typeof attributes[property] === "string")
+                            if (shallow)
+                                ref.setAttribute(property, attributes[property])
+                            else ref[property] = attributes[property]
+                        else
+                            applyAttributes(
+                                attributes[property],
+                                ref[property],
+                                false
+                            )
+                    })
+                },
+                create = h => {
+                    if (typeof h === "string") return document.createTextNode(h)
+
+                    let { nodeName, attributes, childNodes } = h
+
+                    let element = document.createElement(nodeName)
+
+                    applyAttributes(attributes, element)
+
+                    childNodes.forEach(child => {
+                        typeof child === "string"
+                            ? element.appendChild(
+                                  document.createTextNode(child)
+                              )
+                            : element.appendChild(create(child))
+                    })
+
+                    return element
+                },
+                render = (node, element) => {
+                    if (!element.children.length)
+                        return element.appendChild(create(node))
+
+                    let applyDiff = (node, ref) => {
+                        if (typeof node === "string")
+                            if (ref.nodeName === "#text")
+                                return node !== ref.textContent
+                                    ? ref.parentElement.replaceChild(
+                                          document.createTextNode(node),
+                                          ref
+                                      )
+                                    : null
+                            else
+                                ref.parentElement.replaceChild(
+                                    document.createTextNode(node),
+                                    ref
+                                )
+
+                        let { nodeName, attributes, childNodes } = node,
+                            diffed = diff(node, ref)
+
+                        if (nodeName !== `${ref.nodeName}`.toLowerCase())
+                            return ref.parentElement.replaceChild(
+                                create(node),
+                                ref
+                            )
+
+                        applyAttributes(attributes, ref)
+
+                        childNodes.forEach((child, index) =>
+                            typeof ref.childNodes[index] !== "undefined"
+                                ? applyDiff(child, ref.childNodes[index])
+                                : ref.appendChild(create(child))
+                        )
+
+                        // Stop if childNodes doesn't overflow
+                        if (childNodes.length >= ref.childNodes.length) return
+
+                        Array.apply(
+                            null,
+                            new Array(ref.childNodes.length - childNodes.length)
+                        )
+                            .map((_, index) => index + childNodes.length)
+                            .reverse() // Otherwise child stack will auto update
+                            .forEach(index =>
+                                ref.removeChild(ref.childNodes[index])
+                            )
+                    }
+
+                    applyDiff(node, element.childNodes[0])
+                }
+
+            let a = (title = "Title") =>
+                h(
+                    "h1",
+                    null,
+                    title,
+                    h(
+                        "footer",
+                        { style: { fontSize: "14px", color: "grey" } },
+                        "Virtual Dom"
+                    )
+                )
+
+            document.addEventListener("DOMContentLoaded", () => {
+                render(a(), document.getElementById("root"))
+
+                document
+                    .getElementById("textbox")
+                    .addEventListener("input", event => {
+                        console.log(event.target.value)
+                        render(
+                            a(event.target.value),
+                            document.getElementById("root")
+                        )
+                    })
+            })
+        </script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <input id="textbox" value="Title" />
+    </body>
+</html>
