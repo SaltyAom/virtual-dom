@@ -10,7 +10,7 @@
             }
         </style>
         <script>
-            let h = (nodeName, attributes, ...childNodes) => ({
+            let createElement = (nodeName, attributes, ...childNodes) => ({
                     nodeName: nodeName.toLowerCase(),
                     attributes: attributes === null ? false : attributes,
                     childNodes
@@ -186,11 +186,11 @@
                 }
 
             let a = (title = "Title") =>
-                h(
+                createElement(
                     "h1",
                     null,
                     title,
-                    h(
+                    createElement(
                         "footer",
                         { style: { fontSize: "14px", color: "grey" } },
                         "Virtual Dom"
