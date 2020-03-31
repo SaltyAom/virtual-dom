@@ -113,7 +113,7 @@
                             return (childNodes[index] = child)
 
                         if (
-                            typeof child !== "object" ||
+                            typeof child !== "string" ||
                             typeof old.childNodes !== "object"
                         )
                             return (childNodes[index] = child)
@@ -233,19 +233,23 @@
                         { style: { fontSize: "14px", color: "grey" } },
                         "Virtual Dom"
                     )
-                )
+                ),
+                b = createElement("h1", null, "Hello"),
+                c = createElement("h1", null, "World")
 
             document.addEventListener("DOMContentLoaded", () => {
-                render(a(), document.getElementById("root"))
+                render(b, document.getElementById("root"))
 
-                document
-                    .getElementById("textbox")
-                    .addEventListener("input", event => {
-                        render(
-                            a(event.target.value),
-                            document.getElementById("root")
-                        )
-                    })
+                // render(a(), document.getElementById("root"))
+
+                // document
+                //     .getElementById("textbox")
+                //     .addEventListener("input", event => {
+                //         render(
+                //             a(event.target.value),
+                //             document.getElementById("root")
+                //         )
+                //     })
             })
         </script>
     </head>
