@@ -125,7 +125,7 @@
                             !diffedNode.attributes &&
                             !diffedNode.childNodes
                         )
-                            return
+                            return (childNodes[index] = false)
                         else return (childNodes[index] = diffedNode)
                     })
 
