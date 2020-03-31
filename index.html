@@ -238,18 +238,16 @@
                 c = createElement("h1", null, "World")
 
             document.addEventListener("DOMContentLoaded", () => {
-                render(b, document.getElementById("root"))
+                render(a(), document.getElementById("root"))
 
-                // render(a(), document.getElementById("root"))
-
-                // document
-                //     .getElementById("textbox")
-                //     .addEventListener("input", event => {
-                //         render(
-                //             a(event.target.value),
-                //             document.getElementById("root")
-                //         )
-                //     })
+                document
+                    .getElementById("textbox")
+                    .addEventListener("input", event => {
+                        render(
+                            a(event.target.value),
+                            document.getElementById("root")
+                        )
+                    })
             })
         </script>
     </head>
